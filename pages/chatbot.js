@@ -2,10 +2,13 @@
 
 import React, { useEffect, useState, useRef } from "react";
 import Spline from '@splinetool/react-spline';
-import styled, { keyframes } from 'styled-components';
+import styled from 'styled-components';
 import { FaPaperPlane, FaEdit, FaTrashAlt } from 'react-icons/fa';
-import { AzureOpenAI } from "openai";
-import { DefaultAzureCredential, getBearerTokenProvider } from "@azure/identity";
+import Cookies from 'js-cookie';
+
+const HOME_CHAT_COOKIE = 'home_chat';
+
+
 
 const ChatContainer = styled.div`
   display: flex;
@@ -61,7 +64,7 @@ const Message = styled.div`
   transition: background 0.3s, transform 0.3s;
 
   &:hover {
-    background: ${(props) => (props.isUser ? 'linear-gradient(45deg, #0056b3, #003f7f)' : 'linear-gradient(45deg, #8e44ad, #6f2b7d)')};
+    background: ${(props) => (props.isUser ? 'linear-gradient(45deg, #0095f6, #007bb5)' : 'linear-gradient(45deg, #ff66cc, #b03e99)')};
     transform: translateY(-2px);
   }
 
@@ -75,6 +78,24 @@ const Footer = styled.div`
   padding: 15px;
   display: flex;
   border-top: 1px solid rgba(255, 255, 255, 0.3);
+`;
+
+const NewChatButton = styled.button`
+  padding: 10px 20px;
+  background-color: #007BFF;
+  color: white;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 16px;
+  box-shadow: 0px 0px 10px rgba(0, 123, 255, 0.5);
+  transition: background-color 0.3s, transform 0.3s;
+  margin-right: 30px;
+
+  &:hover {
+    background-color: #0056b3;
+    transform: translateY(-2px);
+  }
 `;
 
 const Input = styled.input`
@@ -91,16 +112,10 @@ const Input = styled.input`
   }
 `;
 
-const sendIconAnimation = keyframes`
-  0% { transform: scale(1); }
-  50% { transform: scale(1.2); }
-  100% { transform: scale(1); }
-`;
-
 const SendButton = styled.button`
   margin-left: 10px;
   padding: 12px;
-  background-color: #0095f6;
+  background-color: #007BFF;
   color: white;
   border: none;
   border-radius: 50%;
@@ -108,11 +123,10 @@ const SendButton = styled.button`
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.3);
-  animation: ${sendIconAnimation} 1s infinite ease-in-out;
+  box-shadow: 0px 0px 10px rgba(0, 123, 255, 0.3);
 
   &:hover {
-    background-color: #007bb5;
+    background-color: #0056b3;
     box-shadow: 0px 0px 15px rgba(0, 123, 255, 0.7);
   }
 `;
@@ -144,10 +158,25 @@ const Actions = styled.div`
 `;
 
 const Home = () => {
-  const [messages, setMessages] = useState([{ text: 'Hello, how can I assist you today?', isUser: false }]);
+  const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [editIndex, setEditIndex] = useState(null);
   const messageAreaRef = useRef(null);
+
+  useEffect(() => {
+
+    const savedMessages = Cookies.get(HOME_CHAT_COOKIE);
+    if (savedMessages) {
+      setMessages(JSON.parse(savedMessages));
+    } else {
+      setMessages([{ text: 'Hello, how can I assist you today?', isUser: false }]);
+    }
+  }, []);
+
+  useEffect(() => {
+
+    Cookies.set(HOME_CHAT_COOKIE, JSON.stringify(messages), { expires: 365 });
+  }, [messages]);
 
   const sendMessage = async () => {
     if (input.trim()) {
@@ -157,7 +186,7 @@ const Home = () => {
 
       setMessages(updatedMessages);
       setInput('');
-      setEditIndex(null); // Clear edit index after sending
+      setEditIndex(null);
 
       console.log("Messages after sending:", updatedMessages);
 
@@ -170,6 +199,7 @@ const Home = () => {
       sendMessage();
     }
   };
+
   const fetchAzureResponse = async (message) => {
     try {
       const conversation = messages.map(msg => ({
@@ -177,11 +207,11 @@ const Home = () => {
         content: msg.text
       }));
       conversation.push({ role: "user", content: message });
-  
+
       const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
         method: "POST",
         headers: {
-          "Authorization": `Bearer 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`, // Replace with your actual API key
+          "Authorization": `Bearer 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`,
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
@@ -192,15 +222,14 @@ const Home = () => {
           repetition_penalty: 1
         })
       });
-  
+
       if (!response.ok) {
         throw new Error(`Error: ${response.status} ${response.statusText}`);
       }
-  
+
       const data = await response.json();
       const reply = data.choices[0]?.message?.content || "Sorry, I didn't get that.";
-  
-      // Update the messages state with the AI's response
+
       setMessages(prevMessages => [
         ...prevMessages,
         { text: reply, isUser: false }
@@ -208,6 +237,11 @@ const Home = () => {
     } catch (error) {
       console.error("Error fetching response from API:", error);
     }
+  };
+
+  const startNewChat = () => {
+    setMessages([{ text: 'Hello, how can I assist you today?', isUser: false }]);
+    Cookies.remove(HOME_CHAT_COOKIE);
   };
 
   useEffect(() => {
@@ -225,6 +259,7 @@ const Home = () => {
   const deleteMessage = (index) => {
     setMessages(messages.filter((_, i) => i !== index));
   };
+
   return (
     <main>
       <Spline
@@ -250,7 +285,9 @@ const Home = () => {
             </Message>
           ))}
         </MessageArea>
+        
         <Footer>
+          <NewChatButton onClick={startNewChat}>Clear Chat</NewChatButton>
           <Input
             value={input}
             onChange={(e) => setInput(e.target.value)}
