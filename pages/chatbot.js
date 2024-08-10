@@ -172,6 +172,12 @@ const Home = () => {
   };
   const fetchAzureResponse = async (message) => {
     try {
+      const conversation = messages.map(msg => ({
+        role: msg.isUser ? "user" : "assistant",
+        content: msg.text
+      }));
+      conversation.push({ role: "user", content: message });
+  
       const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
         method: "POST",
         headers: {
@@ -180,9 +186,7 @@ const Home = () => {
         },
         body: JSON.stringify({
           model: "meta-llama/llama-3.1-8b-instruct:free",
-          messages: [
-            { role: "user", content: message }
-          ],
+          messages: conversation,
           top_p: 1,
           temperature: 0.85,
           repetition_penalty: 1
