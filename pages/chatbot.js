@@ -1,11 +1,11 @@
 'use client';
 
 import React, { useEffect, useState, useRef } from "react";
-import { collection, query, onSnapshot } from "firebase/firestore";
 import Spline from '@splinetool/react-spline';
 import styled, { keyframes } from 'styled-components';
 import { FaPaperPlane, FaEdit, FaTrashAlt } from 'react-icons/fa';
-import { db } from "../firebase"; // Make sure to import your Firestore database
+import { AzureOpenAI } from "openai";
+import { DefaultAzureCredential, getBearerTokenProvider } from "@azure/identity";
 
 const ChatContainer = styled.div`
   display: flex;
@@ -151,15 +151,15 @@ const Home = () => {
 
   const sendMessage = async () => {
     if (input.trim()) {
-      if (editIndex !== null) {
-        const updatedMessages = [...messages];
-        updatedMessages[editIndex] = { text: input, isUser: true };
-        setMessages(updatedMessages);
-        setEditIndex(null);
-      } else {
-        setMessages([...messages, { text: input, isUser: true }]);
-      }
+      const updatedMessages = editIndex !== null 
+        ? messages.map((msg, index) => (index === editIndex ? { text: input, isUser: true } : msg))
+        : [...messages, { text: input, isUser: true }];
+
+      setMessages(updatedMessages);
       setInput('');
+      setEditIndex(null); // Clear edit index after sending
+
+      console.log("Messages after sending:", updatedMessages);
 
       await fetchAzureResponse(input);
     }
@@ -170,22 +170,39 @@ const Home = () => {
       sendMessage();
     }
   };
-
   const fetchAzureResponse = async (message) => {
     try {
-      const response = await fetch('YOUR_AZURE_ENDPOINT_URL', {
-        method: 'POST',
+      const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer YOUR_ACCESS_TOKEN`,
+          "Authorization": `Bearer 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`, // Replace with your actual API key
+          "Content-Type": "application/json"
         },
-        body: JSON.stringify({ message }),
+        body: JSON.stringify({
+          model: "meta-llama/llama-3.1-8b-instruct:free",
+          messages: [
+            { role: "user", content: message }
+          ],
+          top_p: 1,
+          temperature: 0.85,
+          repetition_penalty: 1
+        })
       });
-
+  
+      if (!response.ok) {
+        throw new Error(`Error: ${response.status} ${response.statusText}`);
+      }
+  
       const data = await response.json();
-      setMessages([...messages, { text: data.reply, isUser: false }]);
+      const reply = data.choices[0]?.message?.content || "Sorry, I didn't get that.";
+  
+      // Update the messages state with the AI's response
+      setMessages(prevMessages => [
+        ...prevMessages,
+        { text: reply, isUser: false }
+      ]);
     } catch (error) {
-      console.error("Error fetching response from Azure:", error);
+      console.error("Error fetching response from API:", error);
     }
   };
 
@@ -204,7 +221,6 @@ const Home = () => {
   const deleteMessage = (index) => {
     setMessages(messages.filter((_, i) => i !== index));
   };
-
   return (
     <main>
       <Spline
