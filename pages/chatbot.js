@@ -52,7 +52,7 @@ const MessageArea = styled.div`
 `;
 
 const Message = styled.div`
-  margin-bottom: 10px;
+  margin-bottom: 25px;
   padding: 15px 20px;
   background: ${(props) => (props.isUser ? 'linear-gradient(45deg, #007BFF, #0056b3)' : 'linear-gradient(45deg, #ff0099, #8e44ad)')};
   color: white;
@@ -77,7 +77,6 @@ const Message = styled.div`
 const Footer = styled.div`
   padding: 15px;
   display: flex;
-  border-top: 1px solid rgba(255, 255, 255, 0.3);
 `;
 
 const NewChatButton = styled.button`
