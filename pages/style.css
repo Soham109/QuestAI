@@ -1,0 +1,18 @@
+.spline-container {
+    width: 100vw; /* Full viewport width */
+    height: 100vh; /* Full viewport height */
+    background-color: #000; /* Black background */
+    display: flex; /* Flexbox for centering */
+    align-items: center; /* Center content vertically */
+    justify-content: center; /* Center content horizontally */
+    overflow: hidden; /* Prevent scrollbars */
+    position: relative; /* Ensure the container is positioned properly */
+    min-height: 100vh; /* Full viewport height */
+    min-width: 100vw; /* Full viewport width */
+  }
+  
+  .spline-container iframe {
+    width: 100%;
+    height: 100%;
+    border: none; /* Remove border from iframe */
+  }
