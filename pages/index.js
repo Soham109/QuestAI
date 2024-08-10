@@ -1,39 +1,26 @@
-import React, { useEffect, useState } from "react";
-import { db } from "../firebase";
-import { collection, query, onSnapshot } from "firebase/firestore";
-import { useAuth } from "../components/AuthProvider";
+'use client';
+
+import React from 'react';
+import { useRouter } from 'next/router';
 import Spline from '@splinetool/react-spline';
-import './style.css';
 
-const Home = () => {
-  const { currentUser } = useAuth();
-  const [inventory, setInventory] = useState([]);
+export default function LandingPage() {
+  const router = useRouter();
 
-  useEffect(() => {
-    if (!currentUser) return;
-
-    const inventoryRef = collection(db, "users", currentUser.uid, "inventory");
-    const q = query(inventoryRef);
-
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const items = [];
-      querySnapshot.forEach((doc) => {
-        items.push({ id: doc.id, ...doc.data() });
-      });
-      setInventory(items);
-    });
-
-    return () => unsubscribe();
-  }, [currentUser]);
+  // Function to handle navigation
+  const handleSplineClick = () => {
+    router.push('/chatbot'); // Ensure navigation to the correct page
+  };
 
   return (
-    <main className="spline-container">
-      <Spline
-        scene="https://prod.spline.design/W4nXNJ-GpaUMvHQn/scene.splinecode"
-        style={{ width: '100%', height: '100%' }}
-      />
+    <div style={{ backgroundColor: 'black', height: '100vh', color: 'white', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+      <main style={{ width: '100%', height: '100%', position: 'relative' }}>
+        <Spline
+          scene="https://prod.spline.design/RK2-M-rPuUouVkuj/scene.splinecode"
+          style={{ width: '100%', height: '100%' }}
+          onClick={handleSplineClick} // Handle click event
+        />
       </main>
+    </div>
   );
-};
-
-export default Home;
+}

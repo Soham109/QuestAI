@@ -6,9 +6,9 @@
     align-items: center; /* Center content vertically */
     justify-content: center; /* Center content horizontally */
     overflow: hidden; /* Prevent scrollbars */
-    position: relative; /* Ensure the container is positioned properly */
-    min-height: 100vh; /* Full viewport height */
-    min-width: 100vw; /* Full viewport width */
+    position: relative; 
+    min-height: 100vh;
+    min-width: 100vw;
   }
   
   .spline-container iframe {

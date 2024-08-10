@@ -1,38 +1,21 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { useRouter } from "next/router";
 import { ThemeProvider, CssBaseline } from "@mui/material";
-import Auth from "../components/Auth";
-import { AuthProvider, useAuth } from "../components/AuthProvider"; 
-import theme from "../components/src/theme"; 
+import theme from "../components/src/theme";
+import LandingPage from ".";
 
-function MyApp({ Component, pageProps }) {
+export default function MyApp({ Component, pageProps }) {
+  const router = useRouter();
+  const { pathname } = router;
+
   return (
-    <AuthProvider>
-      <ThemeProvider theme={theme}>
-        <CssBaseline />
-        <AuthWrapper>
-          <Component {...pageProps} />
-        </AuthWrapper>
-      </ThemeProvider>
-    </AuthProvider>
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      {pathname === '/' ? (
+        <LandingPage /> // Only show LandingPage on root route
+      ) : (
+        <Component {...pageProps} /> // Show other components for other routes
+      )}
+    </ThemeProvider>
   );
 }
-
-const AuthWrapper = ({ children }) => {
-  const { currentUser } = useAuth();
-  const router = useRouter();
-
-  useEffect(() => {
-    if (!currentUser && router.pathname !== "/auth") {
-      router.push("/auth");
-    }
-  }, [currentUser, router]);
-
-  if (!currentUser && router.pathname !== "/auth") {
-    return <Auth />;
-  }
-
-  return <>{children}</>;
-};
-
-export default MyApp;
